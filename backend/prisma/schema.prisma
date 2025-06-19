@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int         @id @default(autoincrement())
+  name       String
+  image      String
+  email      String      @unique
+  password   String
+  moodLogs   MoodLog[]
+  lifeEvents LifeEvent[]
+  rituals    Ritual[]
+  habits     Habit[]
+}
+
+model MoodLog {
+  id          Int    @id @default(autoincrement())
+  mood        String
+  energyLevel Int
+  stressLevel Int
+  userId      Int
+  user        User   @relation(fields: [userId], references: [id])
+
+  date      DateTime @default(now()) @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+}
+
+model LifeEvent {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  emotionType String
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Ritual {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  title       String
+  ritualType  String //breathe-movement-meditation
+  duration    Int // seconds
+  ritualSteps String[]
+  notes       String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  logs        RitualLog[]
+}
+
+model RitualLog {
+  id       Int          @id @default(autoincrement())
+  ritualId Int
+  ritual   Ritual       @relation(fields: [ritualId], references: [id])
+  status   RitualStatus
+
+  date        DateTime  @default(now())
+  startedAt   DateTime?
+  pausedAt    DateTime?
+  resumedAt   DateTime?
+  completedAt DateTime?
+
+  @@unique([ritualId, date])
+}
+
+model Habit {
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  user      User       @relation(fields: [userId], references: [id])
+  title     String
+  createdAt DateTime   @default(now())
+  habitLogs HabitLog[]
+}
+
+model HabitLog {
+  id      Int      @id @default(autoincrement())
+  habitId Int
+  habit   Habit    @relation(fields: [habitId], references: [id])
+  date    DateTime @default(now())
+
+  @@unique([habitId, date])
+}
+
+
+enum RitualStatus {
+  STARTED
+  PAUSED
+  COMPLETED
+}
