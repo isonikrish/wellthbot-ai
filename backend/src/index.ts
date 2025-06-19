@@ -29,6 +29,9 @@ app.use(
 );
 app.use(express.json());
 
+app.get("/", (req: any, res: any)=>{
+  res.send("Hello!")
+})
 app.use("/api/user", userRoutes);
 app.use("/api/lifeEvent", lifeEventRoutes);
 app.use("/api/ritual", ritualRoutes);
