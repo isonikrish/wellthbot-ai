@@ -16,14 +16,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
 });
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   })
 );
@@ -34,9 +34,8 @@ app.use("/api/lifeEvent", lifeEventRoutes);
 app.use("/api/ritual", ritualRoutes);
 app.use("/api/habit", habitRoutes);
 
-
 listener(io);
 
-server.listen(5003, () => {
+server.listen(process.env.PORT, () => {
   console.log("Server Started");
 });
