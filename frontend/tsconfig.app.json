@@ -12,22 +12,23 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmitOnError": false,        // ✅ Allow build even with type errors
-    "noEmit": false,               // ✅ Emit JS files during build
+    "noEmit": true,
     "jsx": "react-jsx",
 
     /* Linting */
-    "strict": false,               // ✅ Disable strict type-checking
+    "strict": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
+  
   "include": ["src"]
 }
