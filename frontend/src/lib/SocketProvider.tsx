@@ -11,12 +11,13 @@ interface SocketProviderProps {
 }
 
 export const SocketProvider = ({ children }: SocketProviderProps) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+
     const [socket, setSocket] = useState<Socket | null>(null);
     useEffect(() => {
-        let sock: Socket;
+        const token = localStorage.getItem("token");
 
+        if (!token) return;
+        let sock: Socket;
         const setupSocket = async () => {
 
 
