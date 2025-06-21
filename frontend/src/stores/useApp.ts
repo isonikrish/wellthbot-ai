@@ -12,8 +12,8 @@ type useAppType = {
   fetchMoodlogs: () => Promise<MoodLog[]>;
 };
 
-export const BACKEND_URL = "https://wellthbot-backend.onrender.com";
-// export const BACKEND_URL = "http://localhost:5003";
+// export const BACKEND_URL = "https://wellthbot-backend.onrender.com";
+export const BACKEND_URL = "http://localhost:5003";
 
 
 const token = localStorage.getItem("token");

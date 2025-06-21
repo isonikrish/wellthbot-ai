@@ -53,9 +53,7 @@ export default function listener(io: Server) {
         if (!aiText) return;
 
         aiText = sanitizeAIResponse(aiText);
-
         const parsed = JSON.parse(aiText);
-        console.log("🧠 Raw Gemini Response:", parsed);
         switch (parsed.type) {
           case "PLAN": {
             socket.emit("bot:reply", parsed.plan);
