@@ -26,8 +26,8 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 
 function sanitizeAIResponse(raw: string): string {
   return raw
-    .replace(/^\s*```(?:json)?/, "")       // Remove leading ``` or ```json
-    .replace(/\s*```[\s\n]*$/, "")         // Remove trailing ``` even if on newline
+    .replace(/^\s*```(?:json)?/, "") // Remove leading ``` or ```json
+    .replace(/\s*```[\s\n]*$/, "") // Remove trailing ``` even if on newline
     .trim();
 }
 export default function listener(io: Server) {
@@ -54,11 +54,13 @@ export default function listener(io: Server) {
 
         aiText = sanitizeAIResponse(aiText);
 
-
         const parsed = JSON.parse(aiText);
-
+        console.log("🧠 Raw Gemini Response:", parsed);
         switch (parsed.type) {
-          case "PLAN":
+          case "PLAN": {
+            socket.emit("bot:reply", parsed.plan);
+            break;
+          }
           case "ACTION": {
             const fnName =
               parsed.plan?.tool ||
