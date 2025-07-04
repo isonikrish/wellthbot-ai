@@ -109,8 +109,7 @@ export default function listener(io: Server) {
             socket.emit("bot:error", "Unrecognized response type.");
           }
         }
-      } catch (err) {
-        console.error("JSON Parse or Handler Error:", err);
+      } catch {
         socket.emit("bot:error", "Failed to process AI response.");
       }
     });
