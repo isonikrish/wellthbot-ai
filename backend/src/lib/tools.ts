@@ -1,4 +1,5 @@
 import prisma from "./prisma";
+import { createTransport, createTestAccount,getTestMessageUrl  } from "nodemailer";
 import { startOfDay, endOfDay } from "date-fns";
 
 type EventDataType = {
@@ -69,6 +70,66 @@ export async function getUserMoodLog(userId: number) {
     return { error: "Failed to fetch mood log" };
   }
 }
+export async function getUserRitual(userId: number) {
+  try {
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
+
+    const userRitual = await prisma.ritual.findFirst({
+      where: {
+        userId,
+        createdAt: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return userRitual;
+  } catch (error) {
+    return { error: "Failed to fetch userr ritual" };
+  }
+}
+export async function getUserLifeEvent(userId: number) {
+  try {
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
+
+    const userLifeEvent = await prisma.lifeEvent.findFirst({
+      where: {
+        userId,
+        createdAt: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return userLifeEvent;
+  } catch (error) {
+    return { error: "Failed to fetch life event" };
+  }
+}
+export async function getUserHabit(userId: number) {
+  try {
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
+
+    const userHabit = await prisma.habit.findFirst({
+      where: {
+        userId,
+        createdAt: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return userHabit;
+  } catch (error) {
+    return { error: "Failed to fetch user habit" };
+  }
+}
 export async function createLifeEvent(eventData: EventDataType) {
   try {
     const res = await prisma.lifeEvent.create({
@@ -131,7 +192,7 @@ export async function updateUserMoodlog(data: MoodLogDataType) {
           stressLevel: data.stressLevel,
         },
       });
-      return updatedLog;
+      return `I Updated user mood to ${updatedLog.mood}, stress level ${updatedLog.stressLevel} and energy level ${updatedLog.energyLevel}`;
     } else {
       const newLog = await prisma.moodLog.create({
         data: {
@@ -237,4 +298,92 @@ export async function createHabit(data: HabitDataType) {
   } catch (error) {
     return { error: "Failed to create habit" };
   }
+}
+
+export async function checkDataCompletions(userId: number) {
+  const moodLog = await getUserMoodLog(userId);
+  const lifeEvent = await getUserLifeEvent(userId);
+  const ritual = await getUserRitual(userId);
+  const habit = await getUserHabit(userId);
+
+  return {
+    isComplete: moodLog && lifeEvent && ritual && habit,
+  };
+}
+
+export async function generateReport(userId: number) {
+
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!user || !user.email) {
+    console.error("❌ User not found or missing email");
+    throw new Error("User not found or missing email");
+  }
+
+  const moodLog = await getUserMoodLog(userId);
+
+  const lifeEvents = await getUserLifeEvents(userId);
+
+  const rituals = await getUserRituals(userId);
+
+  const habits = await prisma.habit.findMany({ where: { userId } });
+
+  const report = `
+📊 Your Wellness Report
+
+😌 Mood: ${
+    "mood" in moodLog
+      ? `${moodLog.mood} (Energy: ${moodLog.energyLevel}, Stress: ${moodLog.stressLevel})`
+      : "No mood data available"
+  }
+
+🧘 Rituals: ${
+    Array.isArray(rituals) && rituals.length > 0
+      ? rituals.map((r) => r.title).join(", ")
+      : "No rituals found"
+  }
+
+🌱 Habits: ${
+    Array.isArray(habits) && habits.length > 0
+      ? habits.map((h) => h.title).join(", ")
+      : "No habits found"
+  }
+
+📖 Life Events: ${
+    Array.isArray(lifeEvents) && lifeEvents.length > 0
+      ? lifeEvents.map((e) => `${e.title} (${e.emotionType})`).join(", ")
+      : "No life events recorded"
+  }
+
+💡 Keep going, you're doing great!
+  `;
+  console.log("📝 Final report:\n", report);
+  const testAccount = await createTestAccount();
+  const transporter = createTransport({
+    host: "smtp.ethereal.email",
+    port: 587,
+    secure: false,
+    auth: {
+      user: testAccount.user,
+      pass: testAccount.pass,
+    },
+  });
+  console.log("📧 Transporter created");
+
+  const info = await transporter.sendMail({
+    from: '"Your Bot" <no-reply@yourapp.com>',
+    to: user.email,
+    subject: "Your Wellness Report",
+    text: report,
+  });
+
+    const previewUrl = getTestMessageUrl(info);
+
+    return previewUrl;
+
 }

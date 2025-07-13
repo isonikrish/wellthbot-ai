@@ -1,9 +1,11 @@
 import { Server, Socket } from "socket.io";
 import { socketProtectRoute } from "./getToken";
 import {
+  checkDataCompletions,
   createHabit,
   createLifeEvent,
   createRitual,
+  generateReport,
   getUserLifeEvents,
   getUserMoodLog,
   getUserRituals,
@@ -33,6 +35,7 @@ function sanitizeAIResponse(raw: string): string {
 export default function listener(io: Server) {
   io.use(socketProtectRoute);
   io.on("connection", (socket: Socket) => {
+    console.log("✅ Socket Connected");
     const userId = socket.data.userId;
 
     let messages = [{ role: "user", content: SYSTEM_PROMPT(userId) }];
@@ -55,6 +58,10 @@ export default function listener(io: Server) {
         aiText = sanitizeAIResponse(aiText);
         const parsed = JSON.parse(aiText);
         switch (parsed.type) {
+          case "START": {
+            socket.emit("bot:reply", parsed.message);
+            break;
+          }
           case "PLAN": {
             socket.emit("bot:reply", parsed.plan);
             break;
@@ -71,6 +78,7 @@ export default function listener(io: Server) {
 
             const fn = tools[fnName];
             if (!fn) {
+              console.error("❌ Unknown function:", fnName);
               socket.emit("bot:error", `Unknown function: ${fnName}`);
               return;
             }
@@ -89,6 +97,19 @@ export default function listener(io: Server) {
               });
 
               socket.emit("bot:result", result);
+
+              const completion = await checkDataCompletions(userId);
+
+              if (completion.isComplete) {
+                
+                const url = await generateReport(userId);
+                socket.emit(
+                  "bot:reply",
+                  `I have have sent daily report to your email. Check the mail here ${url}`
+                );
+              } else {
+                console.log("📛 Data not complete, skipping report generation");
+              }
             } catch (err) {
               socket.emit("bot:error", "Failed to execute action.");
             }
@@ -109,7 +130,7 @@ export default function listener(io: Server) {
             socket.emit("bot:error", "Unrecognized response type.");
           }
         }
-      } catch {
+      } catch (err) {
         socket.emit("bot:error", "Failed to process AI response.");
       }
     });
